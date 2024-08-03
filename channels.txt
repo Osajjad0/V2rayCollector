@@ -1,3 +1,3 @@
-https://t.me/nufilter{all_messages}
-https://t.me/outlinev{all_messages}
-https://t.me/ELiV2RAY{all_messages}
+https://t.me/s/nufilter{all_messages}
+https://t.me/s/outlinev{all_messages}
+https://t.me/s/ELiV2RAY{all_messages}
