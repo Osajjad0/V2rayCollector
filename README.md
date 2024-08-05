@@ -14,5 +14,5 @@ Config Type|subscription link
 Vmess         |https://raw.githubusercontent.com/coldwater-10/V2rayCollector/main/vmess_iran.txt      |
 ShadowSocks        |https://raw.githubusercontent.com/coldwater-10/V2rayCollector/main/ss_iran.txt  |
 Trojan |https://raw.githubusercontent.com/coldwater-10/V2rayCollector/main/trojan_iran.txt|
-Vless|https://raw.githubusercontent.com/coldwater-10/V2rayCollector/main/vless_iran.txt|
+Vless|https://raw.githubusercontent.com/Osajjad0/V2rayCollector/main/vless_iran.txt|
 Mixed (configs of this are different)|https://raw.githubusercontent.com/coldwater-10/V2rayCollector/main/mixed_iran.txt|
