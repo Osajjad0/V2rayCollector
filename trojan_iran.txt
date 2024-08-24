@@ -1,0 +1,3 @@
+trojan://dfbbc8de-8a4f-407d-8069-6de38d83c4e1@104.24.196.20:443?path=%2FQ177OZ8bzrxRWBtLTlTL&security=tls&host=hdfy4c6.freelines.net&type=ws&sni=hdfy4c6.freelines.net#😍@v2ray_configs_pool😍
+trojan://telegram-id-privatevpns@15.236.27.153:22222?security=tls&alpn=http/1.1&headerType=none&type=tcp&sni=trojan.burgerip.co.uk#😍@v2ray_configs_pool😍
+trojan://telegram-id-directvpn@35.177.93.208:22222?security=tls&alpn=http/1.1&headerType=none&type=tcp&sni=trojan.burgerip.co.uk#😍@v2ray_configs_pool😍
