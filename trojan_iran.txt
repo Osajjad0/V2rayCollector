@@ -1,0 +1,2 @@
+trojan://telegram-id-directvpn@35.177.109.124:22222?security=tls&alpn=http/1.1&headerType=none&type=tcp&sni=trojan.burgerip.co.uk#😊@v2ray_configs_pool😊
+trojan://telegram-id-privatevpns@13.39.32.250:22222?security=tls&alpn=http/1.1&headerType=none&type=tcp&sni=trojan.burgerip.co.uk#😊@v2ray_configs_pool😊
