@@ -1,0 +1,1 @@
+trojan://f85e2ad7-3e26-4589-b478-b0b15b9b5907@172.67.193.36:2087?encryption=none&security=tls&sni=us1.trojanvpn.de&type=grpc&serviceName=grpc&mode=gun#😎@v2ray_configs_pool😎
