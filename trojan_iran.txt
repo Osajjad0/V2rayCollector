@@ -1,1 +1,2 @@
-trojan://4732adfa16c6450bbef87264e41332db@104.17.215.18:443?type=ws&sni=jobscareerforstudent.com&allowInsecure=1&path=/6b777a91&host=jobscareerforstudent.com#🥰@v2ray_configs_pool🥰
+trojan://telegram-id-directvpn@13.41.255.52:22222?security=tls&alpn=http/1.1&headerType=none&type=tcp&sni=trojan.burgerip.co.uk#🥰@v2ray_configs_pool🥰
+trojan://telegram-id-privatevpns@51.44.36.35:22222?security=tls&alpn=http/1.1&headerType=none&type=tcp&sni=trojan.burgerip.co.uk#🥰@v2ray_configs_pool🥰
