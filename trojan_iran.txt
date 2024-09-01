@@ -1,5 +1,0 @@
-trojan://telegram-id-directvpn@15.222.155.116:22222?security=tls&alpn=http%2F1.1&headerType=none&type=tcp&sni=trojan.burgerip.co.uk#😍@v2ray_configs_pool😍
-trojan://telegram-id-privatevpns@52.215.201.90:22222?security=tls&alpn=http%2F1.1&headerType=none&type=tcp&sni=trojan.burgerip.co.uk#😍@v2ray_configs_pool😍
-trojan://telegram-id-privatevpns@35.159.150.114:22222?security=tls&alpn=http%2F1.1&headerType=none&type=tcp&sni=trojan.burgerip.co.uk#😍@v2ray_configs_pool😍
-trojan://telegram-id-privatevpns@18.135.201.47:22222?security=tls&alpn=http%2F1.1&headerType=none&type=tcp&sni=trojan.burgerip.co.uk#😍@v2ray_configs_pool😍
-trojan://telegram-id-privatevpns@13.43.171.172:22222?security=tls&alpn=http%2F1.1&headerType=none&type=tcp&sni=trojan.burgerip.co.uk#😍@v2ray_configs_pool😍
