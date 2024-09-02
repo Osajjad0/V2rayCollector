@@ -42,7 +42,7 @@ jobs:
         git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Collected" || echo "No changes to commit"
 
     - name: Push Changes
-      uses: ad-m/github-push-action@v1.0.0  # Pinning to a stable version
+      uses: ad-m/github-push-action@v0.6.0  # Updated to a correct version
 
       with:
         branch: main
