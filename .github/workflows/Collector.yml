@@ -11,7 +11,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v3  # Ensure you are on v3 or latest stable version
 
     - name: Set up Go
       uses: actions/setup-go@v4
@@ -25,7 +25,7 @@ jobs:
       run: go run ./main.go
 
     - name: List generated files
-      run: ls -la ./  # Debug: List files created
+      run: ls -la ./  # List files created
 
     - name: Commit Changes
       run: |
@@ -42,7 +42,7 @@ jobs:
         git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Collected" || echo "No changes to commit"
 
     - name: Push Changes
-      uses: ad-m/github-push-action@v0.6.0  # Use the latest stable version
+      uses: ad-m/github-push-action@v0.6.0  # Ensure this version is stable and up to date
 
       with:
         branch: main
