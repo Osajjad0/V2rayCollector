@@ -17,10 +17,14 @@ jobs:
       with:
         go-version: 1.17
 
+    - name: Fetch Telegram messages
+      run: |
+        go run ./fetch_telegram.go
+    
     - name: Build and run Golang file
       run: |
         go run ./main.go
-    
+
     - name: Commit Changes
       run: |
         git config --local user.email "actions@github.com"
@@ -33,6 +37,7 @@ jobs:
         git add ./mixed_iran.txt
         git checkout main
         git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Collected"
+
     - name: Push Changes
       uses: ad-m/github-push-action@master
       with:
