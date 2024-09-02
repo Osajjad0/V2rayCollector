@@ -1,9 +1,8 @@
 name: Collector
-
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 */5 * * *'
+    - cron: '0 */6 * * *'
 
 jobs:
   build:
@@ -11,38 +10,30 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3  # Updated to v3
+      uses: actions/checkout@v2
 
     - name: Set up Go
-      uses: actions/setup-go@v4  # Updated to v4
+      uses: actions/setup-go@v2
       with:
         go-version: 1.17
 
-    - name: Fetch Telegram messages
-      run: go run ./fetch_telegram.go
-
     - name: Build and run Golang file
-      run: go run ./main.go
-
-    - name: List generated files
-      run: ls -la ./  # List files created
-
+      run: |
+        go run ./main.go
+    
     - name: Commit Changes
       run: |
         git config --local user.email "actions@github.com"
         git config --local user.name "GitHub Actions"
-
-        # Check if files exist before adding
-        if [[ -f ./vmess_iran.txt ]]; then git add ./vmess_iran.txt; fi
-        if [[ -f ./trojan_iran.txt ]]; then git add ./trojan_iran.txt; fi
-        if [[ -f ./vless_iran.txt ]]; then git add ./vless_iran.txt; fi
-        if [[ -f ./ss_iran.txt ]]; then git add ./ss_iran.txt; fi
-        if [[ -f ./mixed_iran.txt ]]; then git add ./mixed_iran.txt; fi
-        
-        git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Collected" || echo "No changes to commit"
-
+        git pull origin main
+        git add ./vmess_iran.txt
+        git add ./trojan_iran.txt
+        git add ./vless_iran.txt
+        git add ./ss_iran.txt
+        git add ./mixed_iran.txt
+        git checkout main
+        git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Collected"
     - name: Push Changes
-      uses: ad-m/github-push-action@v0.6.0  # Updated to a correct version
-
+      uses: ad-m/github-push-action@master
       with:
         branch: main
