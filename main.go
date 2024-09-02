@@ -32,7 +32,6 @@ func readLines(path string) ([]string, error) {
 }
 
 func main() {
-
 	configFile := "channels.txt"
 	channels, err := readLines(configFile)
 	if err != nil {
@@ -54,150 +53,118 @@ func main() {
 		"vless":  `vless:\/\/`,
 	}
 
-	//protocol := ""
-	for i := 0; i < len(channels); i++ {
-		all_messages := false
-		if strings.Contains(channels[i], "{all_messages}") {
-			all_messages = true
-			channels[i] = strings.Split(channels[i], "{all_messages}")[0]
-		}
+	for _, channel := range channels {
+		processChannel(channel, configs, myregex)
+	}
 
-		req, err := http.NewRequest("GET", channels[i], nil)
-		if err != nil {
-			log.Fatalf("Error When requesting to: %d Error : %s", channels[i], err)
-		}
+	for proto, configContent := range configs {
+		WriteToFile(RemoveDuplicate(configContent), proto+"_iran.txt")
+	}
+}
 
-		resp, err1 := client.Do(req)
-		if err1 != nil {
-			log.Fatal(err1)
-		}
-		defer resp.Body.Close()
+func processChannel(channel string, configs map[string]string, myregex map[string]string) {
+	allMessages := false
+	if strings.Contains(channel, "{all_messages}") {
+		allMessages = true
+		channel = strings.Split(channel, "{all_messages}")[0]
+	}
 
-		doc, err := goquery.NewDocumentFromReader(resp.Body)
-		if err != nil {
-			log.Fatal(err)
-		}
+	req, err := http.NewRequest("GET", channel, nil)
+	if err != nil {
+		log.Fatalf("Error when requesting to: %s Error: %s", channel, err)
+	}
 
-		messages := doc.Find(".tgme_widget_message_wrap").Length()
-		link, exist := doc.Find(".tgme_widget_message_wrap .js-widget_message").Last().Attr("data-post")
-		if messages < 100 && exist == true {
-			number := strings.Split(link, "/")[1]
-			fmt.Println(number)
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
 
-			doc = GetMessages(100, doc, number, channels[i])
-		}
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-		if all_messages {
-			fmt.Println(doc.Find(".js-widget_message_wrap").Length())
-			doc.Find(".tgme_widget_message_text").Each(func(j int, s *goquery.Selection) {
-				// For each item found, get the band and title
-				message_text := s.Text()
-				lines := strings.Split(message_text, "\n")
-				for a := 0; a < len(lines); a++ {
-					for _, regex_value := range myregex {
-						re := regexp.MustCompile(regex_value)
-						lines[a] = re.ReplaceAllStringFunc(lines[a], func(match string) string {
-							return "\n" + match
-						})
-					}
-					for proto, _ := range configs {
-						if strings.Contains(lines[a], proto) {
-							configs["mixed"] += "\n" + lines[a] + "\n"
-						}
-					}
-				}
+	messages := doc.Find(".tgme_widget_message_wrap").Length()
+	link, exist := doc.Find(".tgme_widget_message_wrap .js-widget_message").Last().Attr("data-post")
 
+	if messages < 100 && exist {
+		number := strings.Split(link, "/")[1]
+		fmt.Println(number)
+		doc = GetMessages(100, doc, number, channel)
+	}
+
+	if allMessages {
+		fmt.Println(doc.Find(".js-widget_message_wrap").Length())
+		doc.Find(".tgme_widget_message_text").Each(func(j int, s *goquery.Selection) {
+			messageText := s.Text()
+			lines := strings.Split(messageText, "\n")
+			extractConfigs(lines, configs, myregex)
+		})
+	} else {
+		doc.Find("code,pre").Each(func(j int, s *goquery.Selection) {
+			messageText := s.Text()
+			lines := strings.Split(messageText, "\n")
+			extractConfigs(lines, configs, myregex)
+		})
+	}
+}
+
+func extractConfigs(lines []string, configs map[string]string, myregex map[string]string) {
+	for _, line := range lines {
+		for protoRegex, regexValue := range myregex {
+			re := regexp.MustCompile(regexValue)
+			line = re.ReplaceAllStringFunc(line, func(match string) string {
+				return "\n" + match
 			})
-		} else {
-			doc.Find("code,pre").Each(func(j int, s *goquery.Selection) {
-				// For each item found, get the band and title
-				message_text := s.Text()
-				lines := strings.Split(message_text, "\n")
-				for a := 0; a < len(lines); a++ {
-					for proto_regex, regex_value := range myregex {
-						re := regexp.MustCompile(regex_value)
-						lines[a] = re.ReplaceAllStringFunc(lines[a], func(match string) string {
-							if proto_regex == "ss" {
-								if match[:3] == "vme" {
-									return "\n" + match
-								} else if match[:3] == "vle" {
-									return "\n" + match
+
+			if len(strings.Split(line, "\n")) > 1 {
+				myConfigs := strings.Split(line, "\n")
+				for _, myConfig := range myConfigs {
+					if myConfig != "" {
+						re := regexp.MustCompile(regexValue)
+						myConfig = strings.ReplaceAll(myConfig, " ", "")
+						match := re.FindStringSubmatch(myConfig)
+						if len(match) >= 1 {
+							switch protoRegex {
+							case "ss":
+								if match[1][:3] == "vme" {
+									configs["vmess"] += "\n" + myConfig + "\n"
+								} else if match[1][:3] == "vle" {
+									configs["vless"] += "\n" + myConfig + "\n"
 								} else {
-									return "\n" + match
+									configs["ss"] += "\n" + myConfig[3:] + "\n"
 								}
-							} else {
-								return "\n" + match
-							}
-						})
-
-						if len(strings.Split(lines[a], "\n")) > 1 {
-							myconfigs := strings.Split(lines[a], "\n")
-							for i := 0; i < len(myconfigs); i++ {
-								if myconfigs[i] != "" {
-									re := regexp.MustCompile(regex_value)
-									myconfigs[i] = strings.ReplaceAll(myconfigs[i], " ", "")
-									match := re.FindStringSubmatch(myconfigs[i])
-									if len(match) >= 1 {
-										if proto_regex == "ss" {
-											if match[1][:3] == "vme" {
-												configs["vmess"] += "\n" + myconfigs[i] + "\n"
-											} else if match[1][:3] == "vle" {
-												configs["vless"] += "\n" + myconfigs[i] + "\n"
-											} else {
-												configs["ss"] += "\n" + myconfigs[i][3:] + "\n"
-											}
-										} else {
-											configs[proto_regex] += "\n" + myconfigs[i] + "\n"
-										}
-									}
-
-								}
-
+							default:
+								configs[protoRegex] += "\n" + myConfig + "\n"
 							}
 						}
 					}
 				}
-			})
+			}
 		}
-
 	}
-
-	for proto, configcontent := range configs {
-		// 		reverse mode :
-		// 		lines := strings.Split(configcontent, "\n")
-		// 		reversed := reverse(lines)
-		// 		WriteToFile(strings.Join(reversed, "\n"), proto+"_iran.txt")
-		// 		simple mode :
-		WriteToFile(RemoveDuplicate(configcontent), proto+"_iran.txt")
-	}
-
 }
 
 func WriteToFile(fileContent string, filePath string) {
-
-	// Check if the file exists
 	if _, err := os.Stat(filePath); err == nil {
-		// If the file exists, clear its content
-		err = ioutil.WriteFile(filePath, []byte{}, 0644)
+		err = os.WriteFile(filePath, []byte{}, 0644)
 		if err != nil {
 			fmt.Println("Error clearing file:", err)
 			return
 		}
 	} else if os.IsNotExist(err) {
-		// If the file does not exist, create it
 		_, err = os.Create(filePath)
 		if err != nil {
 			fmt.Println("Error creating file:", err)
 			return
 		}
 	} else {
-		// If there was some other error, print it and return
 		fmt.Println("Error checking file:", err)
 		return
 	}
 
-	// Write the new content to the file
-	err := ioutil.WriteFile(filePath, []byte(fileContent), 0644)
+	err = os.WriteFile(filePath, []byte(fileContent), 0644)
 	if err != nil {
 		fmt.Println("Error writing file:", err)
 		return
@@ -206,69 +173,64 @@ func WriteToFile(fileContent string, filePath string) {
 	fmt.Println("File written successfully")
 }
 
-func load_more(link string) *goquery.Document {
-	req, _ := http.NewRequest("GET", link, nil)
-	fmt.Println(link)
-	resp, _ := client.Do(req)
-	doc, _ := goquery.NewDocumentFromReader(resp.Body)
+func loadMore(link string) *goquery.Document {
+	req, err := http.NewRequest("GET", link, nil)
+	if err != nil {
+		log.Println("Error creating request:", err)
+		return nil
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Println("Error making request:", err)
+		return nil
+	}
+	defer resp.Body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+		log.Println("Error parsing response body:", err)
+		return nil
+	}
+
 	return doc
 }
 
 func GetMessages(length int, doc *goquery.Document, number string, channel string) *goquery.Document {
-	x := load_more(channel + "?before=" + number)
+	x := loadMore(channel + "?before=" + number)
+	if x == nil {
+		return doc
+	}
 
-	html2, _ := x.Html()
-	reader2 := strings.NewReader(html2)
-	doc2, _ := goquery.NewDocumentFromReader(reader2)
-
-	// _, exist := doc.Find(".js-messages_more").Attr("href")
-	doc.Find("body").AppendSelection(doc2.Find("body").Children())
-
-	newDoc := goquery.NewDocumentFromNode(doc.Selection.Nodes[0])
-	// fmt.Println(newDoc.Find(".js-messages_more").Attr("href"))
-	messages := newDoc.Find(".js-widget_message_wrap").Length()
-
+	doc.Find("body").AppendSelection(x.Find("body").Children())
+	messages := doc.Find(".js-widget_message_wrap").Length()
 	fmt.Println(messages)
+
 	if messages > length {
-		return newDoc
+		return doc
 	} else {
 		num, _ := strconv.Atoi(number)
 		n := num - 21
 		if n > 0 {
 			ns := strconv.Itoa(n)
-			GetMessages(length, newDoc, ns, channel)
-		} else {
-			return newDoc
+			return GetMessages(length, doc, ns, channel)
 		}
 	}
 
-	return newDoc
-}
-
-func reverse(lines []string) []string {
-	for i := 0; i < len(lines)/2; i++ {
-		j := len(lines) - i - 1
-		lines[i], lines[j] = lines[j], lines[i]
-	}
-	return lines
+	return doc
 }
 
 func RemoveDuplicate(config string) string {
 	lines := strings.Split(config, "\n")
-
-	// Use a map to keep track of unique lines
 	uniqueLines := make(map[string]bool)
 
-	// Loop over lines and add unique lines to map
 	for _, line := range lines {
 		if len(line) > 0 {
 			uniqueLines[line] = true
 		}
 	}
 
-	// Join unique lines into a string
 	uniqueString := strings.Join(getKeys(uniqueLines), "\n")
-
 	return uniqueString
 }
 
