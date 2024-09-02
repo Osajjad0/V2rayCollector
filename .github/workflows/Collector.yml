@@ -11,10 +11,10 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3  # Ensure you are on v3 or latest stable version
+      uses: actions/checkout@v2  # Ensure you are on v3 or latest stable version
 
     - name: Set up Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v2
       with:
         go-version: 1.17
 
@@ -42,7 +42,7 @@ jobs:
         git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Collected" || echo "No changes to commit"
 
     - name: Push Changes
-      uses: ad-m/github-push-action@v0.6.0  # Ensure this version is stable and up to date
+      uses: ad-m/github-push-action@master  # Ensure this version is stable and up to date
 
       with:
         branch: main
