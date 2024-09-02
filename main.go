@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -47,18 +46,21 @@ func main() {
 	}
 
 	myregex := map[string]string{
-		"ss":     `(.{3})ss:\/\/`,
-		"vmess":  `vmess:\/\/`,
-		"trojan": `trojan:\/\/`,
-		"vless":  `vless:\/\/`,
+		"ss":     `(?i)(.{3})ss:\/\/`, // Case-insensitive match for protocols
+		"vmess":  `(?i)vmess:\/\/`,
+		"trojan": `(?i)trojan:\/\/`,
+		"vless":  `(?i)vless:\/\/`,
 	}
 
 	for _, channel := range channels {
 		processChannel(channel, configs, myregex)
 	}
 
+	// Write the unique config content to respective files.
 	for proto, configContent := range configs {
-		WriteToFile(RemoveDuplicate(configContent), proto+"_iran.txt")
+		if configContent != "" {
+			WriteToFile(RemoveDuplicate(configContent), proto+"_iran.txt")
+		}
 	}
 }
 
@@ -71,18 +73,18 @@ func processChannel(channel string, configs map[string]string, myregex map[strin
 
 	req, err := http.NewRequest("GET", channel, nil)
 	if err != nil {
-		log.Fatalf("Error when requesting to: %s Error: %s", channel, err)
+		log.Fatalf("Error creating request to: %s, Error: %s", channel, err)
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error during HTTP request: %s", err)
 	}
 	defer resp.Body.Close()
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error parsing response: %s", err)
 	}
 
 	messages := doc.Find(".tgme_widget_message_wrap").Length()
@@ -90,19 +92,19 @@ func processChannel(channel string, configs map[string]string, myregex map[strin
 
 	if messages < 100 && exist {
 		number := strings.Split(link, "/")[1]
-		fmt.Println(number)
+		fmt.Println("Loading more messages starting from:", number)
 		doc = GetMessages(100, doc, number, channel)
 	}
 
 	if allMessages {
-		fmt.Println(doc.Find(".js-widget_message_wrap").Length())
-		doc.Find(".tgme_widget_message_text").Each(func(j int, s *goquery.Selection) {
+		fmt.Println("Total messages:", doc.Find(".js-widget_message_wrap").Length())
+		doc.Find(".tgme_widget_message_text").Each(func(i int, s *goquery.Selection) {
 			messageText := s.Text()
 			lines := strings.Split(messageText, "\n")
 			extractConfigs(lines, configs, myregex)
 		})
 	} else {
-		doc.Find("code,pre").Each(func(j int, s *goquery.Selection) {
+		doc.Find("code,pre").Each(func(i int, s *goquery.Selection) {
 			messageText := s.Text()
 			lines := strings.Split(messageText, "\n")
 			extractConfigs(lines, configs, myregex)
@@ -114,73 +116,25 @@ func extractConfigs(lines []string, configs map[string]string, myregex map[strin
 	for _, line := range lines {
 		for protoRegex, regexValue := range myregex {
 			re := regexp.MustCompile(regexValue)
-			line = re.ReplaceAllStringFunc(line, func(match string) string {
-				return "\n" + match
-			})
 
-			if len(strings.Split(line, "\n")) > 1 {
-				myConfigs := strings.Split(line, "\n")
-				for _, myConfig := range myConfigs {
-					if myConfig != "" {
-						re := regexp.MustCompile(regexValue)
-						myConfig = strings.ReplaceAll(myConfig, " ", "")
-						match := re.FindStringSubmatch(myConfig)
-						if len(match) >= 1 {
-							switch protoRegex {
-							case "ss":
-								if match[1][:3] == "vme" {
-									configs["vmess"] += "\n" + myConfig + "\n"
-								} else if match[1][:3] == "vle" {
-									configs["vless"] += "\n" + myConfig + "\n"
-								} else {
-									configs["ss"] += "\n" + myConfig[3:] + "\n"
-								}
-							default:
-								configs[protoRegex] += "\n" + myConfig + "\n"
-							}
-						}
-					}
-				}
+			match := re.FindStringSubmatch(line)
+			if match != nil {
+				// Add the matched line to the corresponding protocol config.
+				configs[protoRegex] += line + "\n"
 			}
 		}
 	}
 }
 
 func WriteToFile(fileContent string, filePath string) {
-	if _, err := os.Stat(filePath); err == nil {
-		err = os.WriteFile(filePath, []byte{}, 0644)
-		if err != nil {
-			fmt.Println("Error clearing file:", err)
-			return
-		}
-	} else if os.IsNotExist(err) {
-		_, err = os.Create(filePath)
-		if err != nil {
-			fmt.Println("Error creating file:", err)
-			return
-		}
-	} else {
-		fmt.Println("Error checking file:", err)
-		return
+	if err := os.WriteFile(filePath, []byte(fileContent), 0644); err != nil {
+		log.Fatalf("Error writing to file %s: %s", filePath, err)
 	}
-
-	err = os.WriteFile(filePath, []byte(fileContent), 0644)
-	if err != nil {
-		fmt.Println("Error writing file:", err)
-		return
-	}
-
-	fmt.Println("File written successfully")
+	fmt.Printf("File %s written successfully\n", filePath)
 }
 
 func loadMore(link string) *goquery.Document {
-	req, err := http.NewRequest("GET", link, nil)
-	if err != nil {
-		log.Println("Error creating request:", err)
-		return nil
-	}
-
-	resp, err := client.Do(req)
+	resp, err := client.Get(link)
 	if err != nil {
 		log.Println("Error making request:", err)
 		return nil
@@ -202,44 +156,4 @@ func GetMessages(length int, doc *goquery.Document, number string, channel strin
 		return doc
 	}
 
-	doc.Find("body").AppendSelection(x.Find("body").Children())
-	messages := doc.Find(".js-widget_message_wrap").Length()
-	fmt.Println(messages)
-
-	if messages > length {
-		return doc
-	} else {
-		num, _ := strconv.Atoi(number)
-		n := num - 21
-		if n > 0 {
-			ns := strconv.Itoa(n)
-			return GetMessages(length, doc, ns, channel)
-		}
-	}
-
-	return doc
-}
-
-func RemoveDuplicate(config string) string {
-	lines := strings.Split(config, "\n")
-	uniqueLines := make(map[string]bool)
-
-	for _, line := range lines {
-		if len(line) > 0 {
-			uniqueLines[line] = true
-		}
-	}
-
-	uniqueString := strings.Join(getKeys(uniqueLines), "\n")
-	return uniqueString
-}
-
-func getKeys(m map[string]bool) []string {
-	keys := make([]string, len(m))
-	i := 0
-	for k := range m {
-		keys[i] = k
-		i++
-	}
-	return keys
-}
+	doc.Find("
