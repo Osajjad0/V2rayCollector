@@ -1,4 +1,5 @@
 name: Collector
+
 on:
   workflow_dispatch:
   schedule:
@@ -10,17 +11,17 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3  # Updated to v3
+      uses: actions/checkout@latest  # Use the latest version
 
     - name: Set up Go
-      uses: actions/setup-go@v4  # Updated to v4
+      uses: actions/setup-go@latest  # Use the latest version
       with:
         go-version: 1.17
 
     - name: Fetch Telegram messages
       run: |
         go run ./fetch_telegram.go
-    
+
     - name: Build and run Golang file
       run: |
         go run ./main.go
@@ -35,8 +36,7 @@ jobs:
         git add ./vless_iran.txt
         git add ./ss_iran.txt
         git add ./mixed_iran.txt
-        git checkout main
-        git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Collected"
+        git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Collected" || echo "No changes to commit"
 
     - name: Push Changes
       uses: ad-m/github-push-action@master
